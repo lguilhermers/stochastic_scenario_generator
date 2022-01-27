@@ -1,6 +1,6 @@
 # scenario-generator
 
-This City Energy Analyst plugin is used to automate a number of parallelized simulations of the same scenario *for a single building*, based on variable input stochastic distributions. An output file is produced, which saves main inputs and outputs from each iteration.
+This City Energy Analyst plugin is used to automate a number of parallelized simulations of the same scenario **for a single building**, based on variable input stochastic distributions. An output file is produced, which saves main inputs and outputs from each iteration.
 
 Each input parameter defined in the [0,1] domain is defined by a Beta distribution. Input parameters that are outside this domain are adjusted in location and scale by a Four parameters Beta distribution. Each distribution is restrained to minimum and maximum boundaries 
 
