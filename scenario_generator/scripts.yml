@@ -1,0 +1,8 @@
+Scenario Generator:
+
+  - name: stochastic scenario generator
+    label: Scenario Generator
+    description: Automates a number of parallelized simulations based on variable distributions.
+    interfaces: [cli, dashboard]
+    module: scenario_generator.stochastic_scenario_generator
+    parameters: ["general:scenario", "general:multiprocessing", "general:number-of-cpus-to-keep-free", "scenario-generator:iterations"]

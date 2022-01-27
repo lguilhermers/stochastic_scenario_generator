@@ -12,7 +12,6 @@ from cea.datamanagement import archetypes_mapper
 from cea.demand import demand_main, schedule_maker
 from cea.demand.schedule_maker import schedule_maker
 from cea.resources.radiation_daysim import radiation_main
-from cea_calibration.validation import *
 from openpyxl.reader.excel import load_workbook
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
@@ -21,6 +20,7 @@ import random
 import shutil
 import multiprocessing
 from itertools import repeat
+import cea.plugin
 
 __author__ = "Luis Santos"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
@@ -31,6 +31,8 @@ __maintainer__ = "Shanshan Hsieh"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+class ScenarioPlugin(cea.plugin.CeaPlugin):
+    pass
 
 def stochastic_scenario_generator(config, locator, dataframe_with_instances):
     """
@@ -228,7 +230,7 @@ def main(config):
     :return:
     """
     # Simulation general inputs
-    number_simulations = 15  # number of iterations that should run
+    number_simulations = 100  # number of iterations that should run
     number_of_CPUs_to_keep_free = 1  # number cores that won't be used in this simulation (a minimum of 1 is indicated)
     number_cores_assigned = multiprocessing.cpu_count() - number_of_CPUs_to_keep_free
 

@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: scenario-generator
+Version: 1.0
+Summary: A plugin for the City Energy Analyst, used to automates a number of parallelized simulations based on variable distributions
+Home-page: https://github.com/architecture-building-systems/cea-plugin-template
+Author: Architecture and Building Systems
+Author-email: cea@arch.ethz.ch
+License: MIT
+Description: This City Energy Analyst plugin is used to automate a number of parallelized simulations of the same scenario *for a single building*, based on variable input stochastic distributions. An output file is produced, which saves main inputs and outputs from each iteration.
+Platform: UNKNOWN
