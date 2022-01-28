@@ -8,6 +8,7 @@ import cea.config
 import cea.inputlocator
 import numpy as np
 import pandas as pd
+import os
 from cea.datamanagement import archetypes_mapper
 from cea.demand import demand_main, schedule_maker
 from cea.demand.schedule_maker import schedule_maker
@@ -159,7 +160,8 @@ def stochastic_scenario_generator(config, locator, dataframe_with_instances):
         config.multiprocessing = False  # assures each simulation uses a single core
         config.debug = False
         config.scenario = locator.scenario
-        config.scenario_name = config.scenario.split('\\')[-1]
+        # config.scenario_name = config.scenario.split('\\')[-1]
+        config.scenario_name = config.scenario.rsplit(os.sep)[-1]
         archetypes_mapper.main(config)  # loads database into the scenario
         radiation_main.main(config)  # runs solar radiation script
         schedule_maker.schedule_maker_main(locator, config)  # runs schedules
