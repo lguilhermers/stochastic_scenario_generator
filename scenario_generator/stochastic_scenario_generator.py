@@ -80,10 +80,11 @@ def stochastic_scenario_generator(config, locator, dataframe_with_instances):
         zone_gdf.to_file(locator.get_zone_geometry())
 
         # # Changes and saves variables related to SURROUNDINGS
-        # surroundings_gdf = Gdf.from_file(locator.get_surroundings_geometry())
-        # surroundings_gdf['floors_ag'] = instance.surroundings_floors_ag
-        # surroundings_gdf['height_ag'] = instance.surroundings_floor_to_floor_height * surroundings_gdf['floors_ag']
-        # surroundings_gdf.to_file(locator.get_surroundings_geometry())
+        surroundings_gdf = Gdf.from_file(locator.get_surroundings_geometry())
+        surroundings_gdf.floors_ag = [instance.surrounding_floors_ag for floor in surroundings_gdf.floors_ag]
+        surroundings_height = instance.surroundings_floor_to_floor_height * instance.surrounding_floors_ag
+        surroundings_gdf['height_ag'] = [surroundings_height for height in surroundings_gdf.height_ag]
+        surroundings_gdf.to_file(locator.get_surroundings_geometry())
 
         # Changes and saves variables related to CONSTRUCTION_STANDARDS
         archetype_construction = load_workbook(filename=locator.get_database_construction_standards())
