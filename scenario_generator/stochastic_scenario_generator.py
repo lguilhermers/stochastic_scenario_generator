@@ -1,34 +1,35 @@
 """
-This tool automates a number of parallelized simulations based on variable distributions, saving main inputs and outputs
+This City Energy Analyst plugin is used to automate a number of parallelized simulations of the same scenario for a
+single building, based on variable input stochastic distributions.
+An output file is produced, which saves main inputs and outputs from each iteration.
 """
-from __future__ import division
-from __future__ import print_function
 
-import cea.config
-import cea.inputlocator
 import numpy as np
 import pandas as pd
 import os
-from cea.datamanagement import archetypes_mapper
-from cea.demand import demand_main, schedule_maker
-from cea.demand.schedule_maker import schedule_maker
-from cea.resources.radiation_daysim import radiation_main
 from openpyxl.reader.excel import load_workbook
 from geopandas import GeoDataFrame as Gdf
-from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 from scipy.stats import beta
 import random
 import shutil
 import multiprocessing
 from itertools import repeat
+
+import cea.config
+import cea.inputlocator
+from cea.datamanagement import archetypes_mapper
+from cea.demand import demand_main
+from cea.demand.schedule_maker import schedule_maker
+from cea.resources.radiation_daysim import radiation_main
+from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 import cea.plugin
 
 __author__ = "Luis Santos"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Luis Santos, Shanshan Hsieh, Reynold Mok"]
+__credits__ = ["Luis Santos, Jimeno Fonseca"]
 __license__ = "MIT"
 __version__ = "1.0"
-__maintainer__ = "Shanshan Hsieh"
+__maintainer__ = "Luis Santos"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
@@ -37,16 +38,15 @@ class ScenarioPlugin(cea.plugin.CeaPlugin):
 
 def stochastic_scenario_generator(config, locator, dataframe_with_instances):
     """
-    This function loads inputs from a dataframe into the CEA database, runs CEA scripts and stores inputs and outputs
+    This function loads inputs from a dataframe into the CEA database, runs CEA scripts and stores inputs and outputs.
     """
 
     outputs_list = []
-    # loop inside input dataframe and replaces database for every iteration
+    # loop inside input dataframe to replace database for every iteration
     for index, instance in dataframe_with_instances.iterrows():
-        # config.multiprocessing = True  # assures each simulation uses a single core
-        print("Simulation number " + str(index))
+        print("Simulation number {}".format(index))
 
-        # Replace STANDARDs to account for the correct database
+        ## Replace STANDARDs to account for the correct database
         typology = dbf_to_dataframe(locator.get_building_typology())
         typology.STANDARD = 'STANDARD1'
         dataframe_to_dbf(typology, locator.get_building_typology())
@@ -70,7 +70,7 @@ def stochastic_scenario_generator(config, locator, dataframe_with_instances):
         supply_types.cell(column=4, row=2).value = 'SUPPLY_COOLING_AS1'  # baseline: VCC and dry CT
         types.save(locator.get_database_construction_standards())
 
-        # Replace database for inputs generated
+        ## Replace database for inputs generated
 
         # Changes and saves variables related to ZONE
         zone_gdf = Gdf.from_file(locator.get_zone_geometry())
@@ -79,7 +79,7 @@ def stochastic_scenario_generator(config, locator, dataframe_with_instances):
         zone_gdf['GFA_m2'] = zone_gdf.area * (zone_gdf['floors_ag'] + zone_gdf['floors_bg'])
         zone_gdf.to_file(locator.get_zone_geometry())
 
-        # # Changes and saves variables related to SURROUNDINGS
+        # Changes and saves variables related to SURROUNDINGS
         surroundings_gdf = Gdf.from_file(locator.get_surroundings_geometry())
         surroundings_gdf.floors_ag = [instance.surrounding_floors_ag for floor in surroundings_gdf.floors_ag]
         surroundings_height = instance.surroundings_floor_to_floor_height * instance.surrounding_floors_ag
@@ -156,20 +156,18 @@ def stochastic_scenario_generator(config, locator, dataframe_with_instances):
         internal_loads.cell(column=6, row=3).value = instance.efficiency_cooling
         archetypes_use_type.save(locator.get_database_supply_assemblies())
 
-        # Run CEA scripts: archetypes, solar radiation, building schedules and energy demand
+        ## Run CEA scripts: archetypes, solar radiation, building schedules and energy demand
 
         config.multiprocessing = False  # assures each simulation uses a single core
         config.debug = False
         config.scenario = locator.scenario
-        # config.scenario_name = config.scenario.split('\\')[-1]
         config.scenario_name = config.scenario.rsplit(os.sep)[-1]
         archetypes_mapper.main(config)  # loads database into the scenario
         radiation_main.main(config)  # runs solar radiation script
         schedule_maker.schedule_maker_main(locator, config)  # runs schedules
         demand_main.demand_calculation(locator, config)  # runs demand simulation
-        # config.multiprocessing = True
 
-        # Process relevant outputs
+        ## Process relevant outputs
 
         # Total weekly schedules are calculated (calculated by the weekly_schedule function)
         schedules = pd.read_csv(locator.get_building_weekly_schedules('B1001'), skiprows=2)
@@ -217,7 +215,7 @@ def stochastic_scenario_generator(config, locator, dataframe_with_instances):
 
 def weekly_schedule(schedules, schedule_type='OCCUPANCY'):
     """
-    This function sums the hourly fraction for a given schedule for one week.
+    This function sums the hourly fraction for a given schedule for one week (total weekly hours for a given schedule).
     """
     schedule_hours = schedules[['DAY', schedule_type]].groupby('DAY').sum()[schedule_type]
     return schedule_hours['WEEKDAY'] * 5 + schedule_hours['SATURDAY'] + schedule_hours['SUNDAY']
@@ -225,16 +223,12 @@ def weekly_schedule(schedules, schedule_type='OCCUPANCY'):
 
 def main(config):
     """
-    The CLI will call this ``main`` function passing in a ``config`` object after adjusting the configuration
-    to reflect parameters passed on the command line.
-
-    :param config:
-    :type config: cea.config.Configuration
-    :return:
+    This function contains the general inputs and parallelization.
     """
+
     # Simulation general inputs
     number_simulations =config.scenario_generator.iterations
-    print("Running for " + str(number_simulations) + " iterations")
+    print("Running for {} iterations".format(number_simulations))
     number_of_CPUs_to_keep_free = 1  # number cores that won't be used in this simulation (a minimum of 1 is indicated)
     number_cores_assigned = multiprocessing.cpu_count() - number_of_CPUs_to_keep_free
 
@@ -243,7 +237,6 @@ def main(config):
     locators_list = create_scenario(number_cores_assigned, config)  # prepare scenarios
 
     # Parallelization of simulations according to the number of cores available
-    # data_generator_parallel = cea.utilities.parallel.vectorize(stochastic_scenario_generator, config.get_number_of_processes())
     data_generator_parallel = cea.utilities.parallel.vectorize(stochastic_scenario_generator, number_cores_assigned)
     n = len(locators_list)
     data_generator_parallel(
@@ -251,8 +244,7 @@ def main(config):
         locators_list,
         list_of_dataframe_with_instances)
 
-    print("Simulation ended with " + str(number_simulations) + " iteration(s) split into " + str(
-        number_cores_assigned) + " scenario(s)")
+    print("Simulation ended with {} iteration(s) split into {} scenario(s)".format(number_simulations,number_cores_assigned))
 
 
 def sampling_function(number_simulations, number_cores):
@@ -261,7 +253,7 @@ def sampling_function(number_simulations, number_cores):
     The inputs are split according the number of cores simulated, to facilitate parallelization.
     """
 
-    # Creates input data for the simulations based on distributions.
+    ## Creates input data for the simulations based on distributions.
 
     # Define distribution of all input variables. Beta distributions are used as default
     list_of_dict_variables = [{
@@ -271,7 +263,7 @@ def sampling_function(number_simulations, number_cores):
         "surrounding_floors_ag": round(beta.rvs(2, 2, scale=19, loc=1), 0),
         "surroundings_floor_to_floor_height": round(beta.rvs(8, 8, scale=2, loc=2), 1),
         "Hs_ag": round(beta.rvs(4, 4), 2),
-        "Es": round(beta.rvs(8, 2), 2),  # TODO Es as independent variable, can make it conditional
+        "Es": round(beta.rvs(8, 2), 2),  # TODO Es as independent variable, can make it conditional to Hs (Es> Hs)
         "Ns": round(beta.rvs(10, 2), 2),
         "void_deck": round(beta.rvs(3, 4, scale=2, loc=0), 0),
         "wwr": round(beta.rvs(12, 8), 2),
