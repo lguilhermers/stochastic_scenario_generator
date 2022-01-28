@@ -230,7 +230,8 @@ def main(config):
     :return:
     """
     # Simulation general inputs
-    number_simulations = 100  # number of iterations that should run
+    number_simulations =config.scenario_generator.iterations
+    print("Running for " + str(number_simulations) + " iterations")
     number_of_CPUs_to_keep_free = 1  # number cores that won't be used in this simulation (a minimum of 1 is indicated)
     number_cores_assigned = multiprocessing.cpu_count() - number_of_CPUs_to_keep_free
 
