@@ -32,7 +32,7 @@ Annual_energy_demand_MWhyr,	GFA_m2,	EUI_kWhyr_m2,	EEI_kWhyr_m2(used in the Singa
 ## Installation
 To install, clone this repo to a desired path (you would need to have `git` installed to run this command. Alternatively you can also run this command in the CEA console, which comes with `git` pre-installed):
 
-```git clone https://github.com/architecture-building-systems/cea-plugin-template.git DESIRED_PATH```
+```git clone https://github.com/lguilhermers/stochastic_scenario_generator.git DESIRED_PATH```
 
 Open CEA console and enter the following command to install the plugin to CEA:
 
